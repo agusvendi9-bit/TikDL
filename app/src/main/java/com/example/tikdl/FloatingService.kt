@@ -447,3 +447,7 @@ class FloatingService : Service() {
 
     }
 }
+
+    private fun toast(msg: String) {
+        main.post { Toast.makeText(applicationContext, msg, Toast.LENGTH_LONG).show() }
+    }
