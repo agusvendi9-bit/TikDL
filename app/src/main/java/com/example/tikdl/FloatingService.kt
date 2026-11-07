@@ -407,7 +407,7 @@ class FloatingService : Service() {
             b.text = if (n > 9) "9+" else n.toString()
             b.visibility = View.VISIBLE
             showSolid()
-            if (pulse?.isRunning != true) pulse?.start()
+            // pulse dimatikan biar nggak detak jantung
         } else {
             b.visibility = View.GONE
             pulse?.cancel()
