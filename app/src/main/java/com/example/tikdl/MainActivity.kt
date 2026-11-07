@@ -217,7 +217,6 @@ class MainActivity : Activity() {
                     linkInput.setText(txt)
                     setStatus("Link di-paste", "#2196F3")
                 } else {
-                    Toast.makeText(this@MainActivity, "Clipboard kosong", Toast.LENGTH_SHORT).show()
                 }
             }
         }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = dp(6) })

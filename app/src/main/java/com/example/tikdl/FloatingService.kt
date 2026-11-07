@@ -429,7 +429,6 @@ class FloatingService : Service() {
         executor.execute {
             try {
                 val name = Downloader.download(applicationContext, link)
-                toast("Tersimpan di Movies/TikDL/$name")
             } catch (e: Exception) {
                 toast("Gagal: ${e.message}")
             }
@@ -446,7 +445,5 @@ class FloatingService : Service() {
         }
     }
 
-    private fun toast(msg: String) {
-        main.post { Toast.makeText(applicationContext, msg, Toast.LENGTH_LONG).show() }
     }
 }
