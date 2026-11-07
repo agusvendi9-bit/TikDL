@@ -58,8 +58,8 @@ class FloatingService : Service() {
 
     // tombol X
     private var closeView: TextView? = null
-    private var closeCx = 0f
-    private var closeCy = 0f
+    private var closeCx = 0
+    private var closeCy = 0
     private var overClose = false
 
     // baca clipboard
@@ -126,7 +126,7 @@ class FloatingService : Service() {
         }
     }
 
-    private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
+    private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
 
     @Suppress("DEPRECATION")
     private fun screenSize(): Pair<Int, Int> {
@@ -140,8 +140,7 @@ class FloatingService : Service() {
         }
     }
 
-    // ---------- bubble ----------
-
+    // -------- bubble --------
     private fun addBubble() {
         val s = dp(46)
 
@@ -181,8 +180,8 @@ class FloatingService : Service() {
             s, s,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
         )
         lp.gravity = Gravity.TOP or Gravity.START
@@ -304,8 +303,7 @@ class FloatingService : Service() {
         }
     }
 
-    // ---------- transparan saat diam ----------
-
+    // -------- transparan saat diam --------
     private fun showSolid() {
         main.removeCallbacks(fadeRunnable)
         bubble?.animate()?.cancel()
@@ -317,14 +315,13 @@ class FloatingService : Service() {
         main.postDelayed(fadeRunnable, IDLE_DELAY)
     }
 
-    // ---------- tombol X ----------
-
+    // -------- tombol X --------
     private fun showClose() {
         if (closeView != null) return
         val size = dp(56)
         val (sw, sh) = screenSize()
         val tv = TextView(this)
-        tv.text = "✕"
+        tv.text = "X"
         tv.textSize = 22f
         tv.setTextColor(Color.WHITE)
         tv.gravity = Gravity.CENTER
@@ -337,18 +334,18 @@ class FloatingService : Service() {
             size, size,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
-                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
         )
         lp.gravity = Gravity.TOP or Gravity.START
         lp.x = sw / 2 - size / 2
-        lp.y = sh - dp(130)
+        lp.y = sh - dp(200) // <--- Posisi X udah dinaikin biar nyaman
         wm.addView(tv, lp)
         tv.animate().alpha(1f).setDuration(150).start()
         closeView = tv
-        closeCx = lp.x + size / 2f
-        closeCy = lp.y + size / 2f
+        closeCx = lp.x + size / 2
+        closeCy = lp.y + size / 2
         overClose = false
     }
 
@@ -369,8 +366,7 @@ class FloatingService : Service() {
         if (pending.get() == 0) stopSelf() else stopWhenIdle = true
     }
 
-    // ---------- baca clipboard tanpa membuka layar ----------
-
+    // -------- baca clipboard tanpa membuka layar --------
     private fun startGrab() {
         val v = bubble ?: return
         val lp = params ?: return
@@ -398,8 +394,7 @@ class FloatingService : Service() {
         if (link == null) toast("Tidak ada link TikTok di clipboard") else enqueue(link)
     }
 
-    // ---------- antrean ----------
-
+    // -------- antrean --------
     private fun updateBadge() {
         val b = badge ?: return
         val n = pending.get()
@@ -407,7 +402,7 @@ class FloatingService : Service() {
             b.text = if (n > 9) "9+" else n.toString()
             b.visibility = View.VISIBLE
             showSolid()
-            // pulse dimatikan biar nggak detak jantung
+            if (pulse?.isRunning != true) pulse?.start()
         } else {
             b.visibility = View.GONE
             pulse?.cancel()
@@ -428,7 +423,9 @@ class FloatingService : Service() {
 
         executor.execute {
             try {
-                val name = Downloader.download(applicationContext, link)
+                // Proses download
+                Downloader.download(applicationContext, link)
+                // Notifikasi teks "Tersimpan di Movies" sudah DIHAPUS biar bersih
             } catch (e: Exception) {
                 toast("Gagal: ${e.message}")
             }
@@ -445,9 +442,7 @@ class FloatingService : Service() {
         }
     }
 
-    }
-}
-
     private fun toast(msg: String) {
         main.post { Toast.makeText(applicationContext, msg, Toast.LENGTH_LONG).show() }
     }
+}
