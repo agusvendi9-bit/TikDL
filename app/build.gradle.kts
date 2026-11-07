@@ -11,8 +11,8 @@ android {
         applicationId = "com.example.tikdl"
         minSdk = 29
         targetSdk = 34
-        versionCode = 35
-        versionName = "3.5"
+        versionCode = 36
+        versionName = "3.6"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
