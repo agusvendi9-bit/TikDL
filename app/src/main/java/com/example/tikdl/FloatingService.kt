@@ -4,6 +4,7 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.ClipboardManager
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.graphics.PixelFormat
@@ -13,6 +14,7 @@ import android.os.IBinder
 import android.os.Looper
 import android.view.Gravity
 import android.view.MotionEvent
+import android.view.ViewTreeObserver
 import android.view.WindowManager
 import android.widget.ImageView
 import android.widget.Toast
@@ -21,7 +23,6 @@ import kotlin.math.abs
 class FloatingService : Service() {
 
     companion object {
-        const val EXTRA_URL = "url"
         private const val CHANNEL = "tikdl"
     }
 
@@ -29,6 +30,13 @@ class FloatingService : Service() {
     private var bubble: ImageView? = null
     private var params: WindowManager.LayoutParams? = null
     private val main = Handler(Looper.getMainLooper())
+    private var grabbing = false
+
+    private val focusListener = ViewTreeObserver.OnWindowFocusChangeListener { hasFocus ->
+        if (hasFocus && grabbing) {
+            main.postDelayed({ if (grabbing) finishGrab() }, 80)
+        }
+    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -39,10 +47,7 @@ class FloatingService : Service() {
         addBubble()
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        intent?.getStringExtra(EXTRA_URL)?.let { download(it) }
-        return START_STICKY
-    }
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
 
     override fun onDestroy() {
         bubble?.let { runCatching { wm.removeView(it) } }
@@ -80,6 +85,7 @@ class FloatingService : Service() {
             dp(56), dp(56),
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
                 WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
         ).apply {
@@ -112,12 +118,7 @@ class FloatingService : Service() {
                     }
                 }
                 MotionEvent.ACTION_UP -> {
-                    if (!moved) {
-                        startActivity(
-                            Intent(this, ClipActivity::class.java)
-                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        )
-                    }
+                    if (!moved) startGrab()
                 }
             }
             true
@@ -126,6 +127,34 @@ class FloatingService : Service() {
         wm.addView(iv, lp)
         bubble = iv
         params = lp
+    }
+
+    /** Bubble minta fokus sesaat supaya Android mengizinkan baca clipboard. */
+    private fun startGrab() {
+        val iv = bubble ?: return
+        val lp = params ?: return
+        if (grabbing) return
+        grabbing = true
+        iv.viewTreeObserver.addOnWindowFocusChangeListener(focusListener)
+        lp.flags = lp.flags and WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE.inv()
+        wm.updateViewLayout(iv, lp)
+        main.postDelayed({ if (grabbing) finishGrab() }, 600)
+    }
+
+    private fun finishGrab() {
+        val iv = bubble ?: return
+        val lp = params ?: return
+        grabbing = false
+        iv.viewTreeObserver.removeOnWindowFocusChangeListener(focusListener)
+
+        val cm = getSystemService(ClipboardManager::class.java)
+        val text = cm.primaryClip?.getItemAt(0)?.coerceToText(this)?.toString().orEmpty()
+        val link = Regex("https?://\\S*tiktok\\.com\\S*").find(text)?.value
+
+        lp.flags = lp.flags or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+        wm.updateViewLayout(iv, lp)
+
+        if (link == null) toast("Tidak ada link TikTok di clipboard") else download(link)
     }
 
     private fun toast(msg: String) {

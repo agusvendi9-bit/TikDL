@@ -20,13 +20,6 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".ClipActivity"
-            android:exported="false"
-            android:excludeFromRecents="true"
-            android:noHistory="true"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-
         <service
             android:name=".FloatingService"
             android:exported="false"
