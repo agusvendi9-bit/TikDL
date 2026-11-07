@@ -11,12 +11,16 @@ android {
         applicationId = "com.example.tikdl"
         minSdk = 29
         targetSdk = 34
-        versionCode = 33
-        versionName = "3.3"
+        versionCode = 35
+        versionName = "3.5"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+}
+
+dependencies {
+    implementation("com.google.android.material:material:1.11.0")
 }
