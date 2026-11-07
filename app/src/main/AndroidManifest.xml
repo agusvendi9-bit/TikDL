@@ -9,7 +9,7 @@
 
     <application
         android:label="TikDL"
-        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar">
 
         <activity
             android:name=".MainActivity"
