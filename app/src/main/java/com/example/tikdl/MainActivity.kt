@@ -82,7 +82,7 @@ class MainActivity : Activity() {
             setPadding(dp(20), dp(32), dp(20), dp(20))
         }
         
-        setupBerandaUI(containerBeranda, dp)
+        setupBerandaUI(containerBeranda, ::dp)
         scrollBeranda.addView(containerBeranda)
         contentArea.addView(scrollBeranda)
 
