@@ -202,8 +202,8 @@ class MainActivity : Activity() {
 
         // Ikon Paste kecil di dalam kotak
         inputRow.addView(TextView(this).apply {
-            text = "📋"
-            textSize = 18f
+            text = "❐"
+            textSize = 26f
             setPadding(dp(8), 0, dp(8), 0)
             setOnClickListener {
                 val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -251,7 +251,7 @@ class MainActivity : Activity() {
 
         drawerView.addView(TextView(this).apply {
             text = "Pengaturan"
-            textSize = 18f
+            textSize = 26f
             setTypeface(null, Typeface.BOLD)
             setTextColor(Color.WHITE)
             setPadding(0, 0, 0, dp(24))
