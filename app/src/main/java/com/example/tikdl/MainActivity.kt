@@ -294,7 +294,7 @@ class MainActivity : Activity() {
         createMenuItem(drawerView, R.drawable.ic_language, "Bahasa", dp) {}
         addDivider(drawerView)
         
-        createMenuItem(drawerView, R.drawable.ic_help, "Cara Mengunduh", dp) {}
+        createMenuItem(drawerView, R.drawable.ic_help, "Cara Mengunduh", dp) { startActivity(Intent(this@MainActivity, PanduanActivity::class.java)) }
         addDivider(drawerView)
         
         createMenuItem(drawerView, R.drawable.ic_feedback, "Umpan Balik & Saran", dp) {}

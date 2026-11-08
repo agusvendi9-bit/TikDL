@@ -12,6 +12,8 @@
         android:icon="@drawable/logo_tikdl"
         android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar">
 
+        <activity android:name=".PanduanActivity" android:exported="false" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true">
