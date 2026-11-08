@@ -253,7 +253,7 @@ class MainActivity : Activity() {
             setPadding(0, 0, 0, dp(16))
         })
 
-        // --- SWITCH OVERLAY (Ditulis Eksplisit biar aman) ---
+        // --- SWITCH OVERLAY (Eksplisit) ---
         overlaySwitch = Switch(this)
         overlaySwitch.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
@@ -261,7 +261,7 @@ class MainActivity : Activity() {
                     startForegroundService(Intent(this@MainActivity, FloatingService::class.java))
                 } else {
                     startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
-                    overlaySwitch.isChecked = false // Ini aman
+                    overlaySwitch.isChecked = false
                 }
             } else {
                 stopService(Intent(this@MainActivity, FloatingService::class.java))
