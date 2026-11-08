@@ -113,7 +113,7 @@ class FloatingService : Service() {
         val notif = Notification.Builder(this, CHANNEL)
             .setContentTitle("TikDL aktif")
             .setContentText("Salin link TikTok, lalu tap bubble")
-            .setSmallIcon(android.R.drawable.stat_sys_download)
+            .setSmallIcon(R.drawable.ic_notif_t)
             .build()
         if (Build.VERSION.SDK_INT >= 34) {
             startForeground(1, notif, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
