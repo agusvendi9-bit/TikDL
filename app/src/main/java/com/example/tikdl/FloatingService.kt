@@ -189,11 +189,7 @@ class FloatingService : Service() {
         lp.x = sw - s
         lp.y = (sh * 0.4f).toInt()
 
-            PropertyValuesHolder.ofFloat("scaleY", 1f, 1.15f)
         ).apply {
-            duration = 600
-            repeatCount = ValueAnimator.INFINITE
-            repeatMode = ValueAnimator.REVERSE
         }
 
         var startX = 0
