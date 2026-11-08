@@ -16,6 +16,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.text.InputType
 import android.view.Gravity
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.FrameLayout
@@ -268,7 +269,7 @@ class MainActivity : Activity() {
                         startForegroundService(Intent(this@MainActivity, FloatingService::class.java))
                     } else {
                         startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
-                        overlaySwitch.isChecked = false
+                        overlaySwitch.overlaySwitch.isChecked = false
                     }
                 } else {
                     stopService(Intent(this@MainActivity, FloatingService::class.java))
