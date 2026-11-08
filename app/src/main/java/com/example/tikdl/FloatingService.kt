@@ -189,9 +189,6 @@ class FloatingService : Service() {
         lp.x = sw - s
         lp.y = (sh * 0.4f).toInt()
 
-        pulse = ObjectAnimator.ofPropertyValuesHolder(
-            iv,
-            PropertyValuesHolder.ofFloat("scaleX", 1f, 1.15f),
             PropertyValuesHolder.ofFloat("scaleY", 1f, 1.15f)
         ).apply {
             duration = 600
@@ -402,7 +399,7 @@ class FloatingService : Service() {
             b.text = if (n > 9) "9+" else n.toString()
             b.visibility = View.VISIBLE
             showSolid()
-            if (pulse?.isRunning != true) pulse?.start()
+            if (pulse?.isRunning != true) 
         } else {
             b.visibility = View.GONE
             pulse?.cancel()
