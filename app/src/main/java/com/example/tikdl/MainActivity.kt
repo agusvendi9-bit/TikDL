@@ -253,24 +253,22 @@ class MainActivity : Activity() {
             setPadding(0, 0, 0, dp(16))
         })
 
-        // --- SWITCH OVERLAY (Dibuat dulu biar aman) ---
-        overlaySwitch = Switch(this).apply {
-            setOnCheckedChangeListener { _, isChecked ->
-                if (isChecked) {
-                    if (Settings.canDrawOverlays(this@MainActivity)) {
-                        startForegroundService(Intent(this@MainActivity, FloatingService::class.java))
-                    } else {
-                        startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
-                        this.isChecked = false // Ini benerin error Val cannot be reassigned
-                    }
+        // --- SWITCH OVERLAY (Ditulis Eksplisit biar aman) ---
+        overlaySwitch = Switch(this)
+        overlaySwitch.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                if (Settings.canDrawOverlays(this@MainActivity)) {
+                    startForegroundService(Intent(this@MainActivity, FloatingService::class.java))
                 } else {
-                    stopService(Intent(this@MainActivity, FloatingService::class.java))
+                    startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
+                    overlaySwitch.isChecked = false // Ini aman
                 }
+            } else {
+                stopService(Intent(this@MainActivity, FloatingService::class.java))
             }
         }
 
         val switchRow = createMenuItem(drawerView, R.drawable.ic_home, "Floating Bubble", dp) {
-            // Pas row diklik, switch-nya ikut berubah
             overlaySwitch.isChecked = !overlaySwitch.isChecked
         }
         switchRow.addView(overlaySwitch)
