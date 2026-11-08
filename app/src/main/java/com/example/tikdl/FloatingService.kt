@@ -1,7 +1,5 @@
 package com.example.tikdl
 
-import android.animation.ObjectAnimator
-import android.animation.PropertyValuesHolder
 import android.animation.ValueAnimator
 import android.app.Notification
 import android.app.NotificationChannel
@@ -53,7 +51,6 @@ class FloatingService : Service() {
     private var params: WindowManager.LayoutParams? = null
     private var icon: ImageView? = null
     private var badge: TextView? = null
-    private var pulse: ObjectAnimator? = null
     private var snapAnim: ValueAnimator? = null
 
     // tombol X
@@ -99,7 +96,6 @@ class FloatingService : Service() {
     }
 
     override fun onDestroy() {
-        pulse?.cancel()
         snapAnim?.cancel()
         hideClose()
         bubble?.let { runCatching { wm.removeView(it) } }
@@ -188,9 +184,6 @@ class FloatingService : Service() {
         val (sw, sh) = screenSize()
         lp.x = sw - s
         lp.y = (sh * 0.4f).toInt()
-
-        ).apply {
-        }
 
         var startX = 0
         var startY = 0
@@ -333,7 +326,7 @@ class FloatingService : Service() {
         )
         lp.gravity = Gravity.TOP or Gravity.START
         lp.x = sw / 2 - size / 2
-        lp.y = sh - dp(200) // <--- Posisi X udah dinaikin biar nyaman
+        lp.y = sh - dp(160) // <--- Posisi X pas di tengah bawah
         wm.addView(tv, lp)
         tv.animate().alpha(1f).setDuration(150).start()
         closeView = tv
@@ -350,7 +343,6 @@ class FloatingService : Service() {
 
     /** Bubble dimatikan lewat X. Unduhan yang sedang berjalan diselesaikan dulu. */
     private fun closeBubble() {
-        pulse?.cancel()
         snapAnim?.cancel()
         bubble?.let { runCatching { wm.removeView(it) } }
         bubble = null
@@ -395,10 +387,8 @@ class FloatingService : Service() {
             b.text = if (n > 9) "9+" else n.toString()
             b.visibility = View.VISIBLE
             showSolid()
-            if (pulse?.isRunning != true) 
         } else {
             b.visibility = View.GONE
-            pulse?.cancel()
             icon?.scaleX = 1f
             icon?.scaleY = 1f
             scheduleFade()
@@ -416,9 +406,8 @@ class FloatingService : Service() {
 
         executor.execute {
             try {
-                // Proses download
                 Downloader.download(applicationContext, link)
-                // Notifikasi teks "Tersimpan di Movies" sudah DIHAPUS biar bersih
+                // Notifikasi sukses dihapus
             } catch (e: Exception) {
                 toast("Gagal: ${e.message}")
             }
