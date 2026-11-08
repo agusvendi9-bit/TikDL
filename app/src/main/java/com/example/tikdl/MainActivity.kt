@@ -278,7 +278,7 @@ class MainActivity : Activity() {
                     } else {
                         // Minta izin overlay
                         startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
-                        isChecked = false // Balikin switch kalau belum izin
+                        overlaySwitch.isChecked = false // Balikin switch kalau belum izin
                     }
                 } else {
                     stopService(Intent(this@MainActivity, FloatingService::class.java))
