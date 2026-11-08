@@ -20,8 +20,9 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
+import android.widget.Switch
 import android.widget.TextView
-import android.widget.Toast
+import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import org.json.JSONArray
 
@@ -32,9 +33,10 @@ class MainActivity : Activity() {
     private lateinit var downloadBtn: Button
     private lateinit var historyContainer: LinearLayout
 
-    // Kontainer untuk pindah halaman
     private lateinit var containerBeranda: LinearLayout
     private lateinit var containerRiwayat: ScrollView
+    private lateinit var drawerLayout: DrawerLayout
+    private lateinit var overlaySwitch: Switch
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,60 +48,88 @@ class MainActivity : Activity() {
         val d = resources.displayMetrics.density
         fun dp(v: Int) = (v * d).toInt()
 
-        // ===== FRAME UTAMA =====
-        val mainFrame = FrameLayout(this).apply { setBackgroundColor(Color.BLACK) }
+        // ===== 1. ROOT DRAWER LAYOUT =====
+        drawerLayout = DrawerLayout(this).apply { setBackgroundColor(Color.BLACK) }
 
         // Background Minecraft
         val bgImage = ImageView(this).apply {
             setImageResource(R.drawable.bg_minecraft)
             scaleType = ImageView.ScaleType.FIT_CENTER
-            layoutParams = FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT
+            layoutParams = DrawerLayout.LayoutParams(
+                DrawerLayout.LayoutParams.MATCH_PARENT,
+                DrawerLayout.LayoutParams.MATCH_PARENT
             )
         }
-        mainFrame.addView(bgImage)
+        drawerLayout.addView(bgImage)
 
-        // ===== LAYOUT UTAMA (Dibagi jadi Konten & Bottom Nav) =====
+        // ===== 2. LAYOUT UTAMA (KONTEN + BOTTOM NAV) =====
         val mainLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            layoutParams = FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT
+            layoutParams = DrawerLayout.LayoutParams(
+                DrawerLayout.LayoutParams.MATCH_PARENT, DrawerLayout.LayoutParams.MATCH_PARENT
             )
         }
 
-        // ===== AREA KONTEN (Tempat pindah halaman) =====
+        // Header (Tombol Menu & Judul)
+        val headerLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(16), dp(16), dp(16), dp(8))
+        }
+
+        // Tombol Hamburger (☰)
+        headerLayout.addView(TextView(this).apply {
+            text = "☰"
+            textSize = 28f
+            setTextColor(Color.WHITE)
+            setShadowLayer(4f, 2f, 2f, Color.BLACK)
+            setPadding(0, 0, dp(16), 0)
+            setOnClickListener { drawerLayout.openDrawer(Gravity.START) }
+        })
+
+        // Judul Aplikasi
+        headerLayout.addView(TextView(this).apply {
+            text = "TikDL"
+            textSize = 20f
+            setTypeface(null, Typeface.BOLD)
+            setTextColor(Color.WHITE)
+            setShadowLayer(4f, 2f, 2f, Color.BLACK)
+        })
+
+        mainLayout.addView(headerLayout)
+
+        // Area Konten (Beranda / Riwayat)
         val contentArea = FrameLayout(this).apply {
             layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f // Weight 1 biar penuh ke atas
+                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f
             )
         }
 
-        // ---------- 1. HALAMAN BERANDA ----------
+        // ---------- HALAMAN BERANDA (Gaya AhaTok) ----------
         val scrollBeranda = ScrollView(this)
         containerBeranda = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(20), dp(32), dp(20), dp(20))
+            setPadding(dp(16), dp(8), dp(16), dp(16))
         }
-        
-        setupBerandaUI(containerBeranda, ::dp)
+
+        setupBerandaUI(containerBeranda, dp)
         scrollBeranda.addView(containerBeranda)
         contentArea.addView(scrollBeranda)
 
-        // ---------- 2. HALAMAN RIWAYAT ----------
-        containerRiwayat = ScrollView(this).apply { visibility = ScrollView.GONE } // Disembunyiin dulu
+        // ---------- HALAMAN RIWAYAT ----------
+        containerRiwayat = ScrollView(this).apply { visibility = ScrollView.GONE }
         val riwayatLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(20), dp(32), dp(20), dp(20))
+            setPadding(dp(16), dp(16), dp(16), dp(16))
         }
 
         riwayatLayout.addView(TextView(this).apply {
             text = "Riwayat Download"
-            textSize = 24f
+            textSize = 20f
             setTypeface(null, Typeface.BOLD)
             setTextColor(Color.WHITE)
-            setShadowLayer(6f, 2f, 2f, Color.BLACK)
-            setPadding(0, 0, 0, dp(20))
+            setShadowLayer(4f, 2f, 2f, Color.BLACK)
+            setPadding(0, 0, 0, dp(16))
         })
 
         historyContainer = LinearLayout(this).apply {
@@ -112,209 +142,192 @@ class MainActivity : Activity() {
             setPadding(dp(16), dp(16), dp(16), dp(16))
         }
         riwayatLayout.addView(historyContainer)
-        
         containerRiwayat.addView(riwayatLayout)
         contentArea.addView(containerRiwayat)
 
         mainLayout.addView(contentArea)
 
-        // ===== BOTTOM NAVIGATION BAR =====
+        // ---------- BOTTOM NAVIGATION ----------
         val bottomNav = BottomNavigationView(this).apply {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            setBackgroundColor(Color.parseColor("#111111")) // Warna gelap
-            
-            // Bikin menu Beranda & Riwayat
+            setBackgroundColor(Color.parseColor("#111111"))
             menu.add(0, 1, 0, "Beranda").setIcon(android.R.drawable.ic_menu_compass)
             menu.add(0, 2, 1, "Riwayat").setIcon(android.R.drawable.ic_menu_recent_history)
-            
-            // Warna teks & ikon
             itemIconTintList = android.content.res.ColorStateList.valueOf(Color.WHITE)
             itemTextColor = android.content.res.ColorStateList.valueOf(Color.WHITE)
             setOnItemSelectedListener { item ->
                 when (item.itemId) {
-                    1 -> { // Beranda dipilih
-                        scrollBeranda.visibility = ScrollView.VISIBLE
-                        containerRiwayat.visibility = ScrollView.GONE
-                    }
-                    2 -> { // Riwayat dipilih
-                        scrollBeranda.visibility = ScrollView.GONE
-                        containerRiwayat.visibility = ScrollView.VISIBLE
-                        loadHistory() // Refresh list tiap buka riwayat
-                    }
+                    1 -> { scrollBeranda.visibility = ScrollView.VISIBLE; containerRiwayat.visibility = ScrollView.GONE }
+                    2 -> { scrollBeranda.visibility = ScrollView.GONE; containerRiwayat.visibility = ScrollView.VISIBLE; loadHistory() }
                 }
                 true
             }
         }
-        
         mainLayout.addView(bottomNav)
-        mainFrame.addView(mainLayout)
-        setContentView(mainFrame)
+        drawerLayout.addView(mainLayout)
 
+        // ===== 3. SIDEBAR MENU (DRAWER) =====
+        setupDrawerMenu(dp)
+
+        setContentView(drawerLayout)
         loadHistory()
     }
 
-    // ==========================================
-    // FUNGSI BIKIN UI BERANDA (Biar kode rapi)
-    // ==========================================
     private fun setupBerandaUI(root: LinearLayout, dp: (Int) -> Int) {
-        root.addView(TextView(this).apply {
-            text = "🎵 TikDL"
-            textSize = 28f
-            setTypeface(null, Typeface.BOLD)
-            setTextColor(Color.WHITE)
-            setShadowLayer(6f, 2f, 2f, Color.BLACK)
-            gravity = Gravity.CENTER
-        })
-
-        root.addView(TextView(this).apply {
-            text = "Downloader TikTok tanpa watermark"
-            textSize = 13f
-            setTextColor(Color.WHITE)
-            setShadowLayer(6f, 2f, 2f, Color.BLACK)
-            gravity = Gravity.CENTER
-            setPadding(0, dp(4), 0, dp(24))
-        })
-
-        root.addView(TextView(this).apply {
-            text = "Link TikTok"
-            textSize = 13f
-            setTypeface(null, Typeface.BOLD)
-            setTextColor(Color.WHITE)
-            setShadowLayer(6f, 2f, 2f, Color.BLACK)
-            setPadding(0, 0, 0, dp(6))
-        })
-
-        linkInput = EditText(this).apply {
-            hint = "https://vt.tiktok.com/..."
-            setHintTextColor(Color.GRAY)
-            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
-            textSize = 14f
-            setSingleLine()
-            setPadding(dp(12), dp(12), dp(12), dp(12))
+        // Kotak Input Model AhaTok
+        val inputRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
             background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
-                cornerRadius = dp(8).toFloat()
-                setColor(Color.parseColor("#EEFFFFFF")) 
+                cornerRadius = dp(12).toFloat()
+                setColor(Color.parseColor("#CC222222")) // Gelap transparan
             }
-        }
-        root.addView(linkInput)
-
-        val actionRow = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            setPadding(0, dp(10), 0, 0)
+            setPadding(dp(12), dp(4), dp(4), dp(4))
+            gravity = Gravity.CENTER_VERTICAL
         }
 
-        actionRow.addView(Button(this).apply {
-            text = "📋 Paste"
+        linkInput = EditText(this).apply {
+            hint = "Masukkan tautan media untuk diunduh"
+            setHintTextColor(Color.GRAY)
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
             textSize = 13f
+            setTextColor(Color.WHITE)
+            setSingleLine()
+            background = null // Biar nyatu sama kotak
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        }
+        inputRow.addView(linkInput)
+
+        // Ikon Paste kecil di dalam kotak
+        inputRow.addView(TextView(this).apply {
+            text = "📋"
+            textSize = 18f
+            setPadding(dp(8), 0, dp(8), 0)
             setOnClickListener {
                 val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val clip = cm.primaryClip
                 if (clip != null && clip.itemCount > 0) {
-                    val txt = clip.getItemAt(0).text?.toString() ?: ""
-                    linkInput.setText(txt)
-                    setStatus("Link di-paste", "#2196F3")
-                } else {
+                    linkInput.setText(clip.getItemAt(0).text?.toString() ?: "")
                 }
             }
-        }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = dp(6) })
+        })
 
+        // Tombol Unduh Merah
         downloadBtn = Button(this).apply {
-            text = "⬇ Download"
-            textSize = 13f
+            text = "Unduh"
+            textSize = 14f
             setBackgroundColor(Color.parseColor("#FF0050"))
             setTextColor(Color.WHITE)
+            setPadding(dp(16), 0, dp(16), 0)
             setOnClickListener { startDownload() }
         }
-        actionRow.addView(downloadBtn, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = dp(6) })
-        root.addView(actionRow)
+        inputRow.addView(downloadBtn)
 
+        root.addView(inputRow)
+
+        // Status Text
         statusText = TextView(this).apply {
             text = "Siap menerima link"
-            textSize = 13f
+            textSize = 12f
             setTextColor(Color.WHITE)
-            setShadowLayer(6f, 2f, 2f, Color.BLACK)
+            setShadowLayer(4f, 2f, 2f, Color.BLACK)
             gravity = Gravity.CENTER
-            setPadding(0, dp(14), 0, dp(14))
+            setPadding(0, dp(16), 0, dp(16))
         }
         root.addView(statusText)
-
-        val bubbleLayout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(16), dp(16), dp(16), dp(16))
-            background = GradientDrawable().apply {
-                shape = GradientDrawable.RECTANGLE
-                cornerRadius = dp(12).toFloat()
-                setColor(Color.parseColor("#CC000000"))
-            }
-        }
-        root.addView(bubbleLayout)
-
-        bubbleLayout.addView(TextView(this).apply {
-            text = "Floating Bubble"
-            textSize = 14f
-            setTypeface(null, Typeface.BOLD)
-            setTextColor(Color.WHITE)
-            setPadding(0, 0, 0, dp(8))
-        })
-
-        bubbleLayout.addView(Button(this).apply {
-            text = "1. Izinkan overlay"
-            textSize = 13f
-            setOnClickListener {
-                startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
-            }
-        })
-        bubbleLayout.addView(Button(this).apply {
-            text = "2. Mulai bubble"
-            textSize = 13f
-            setOnClickListener {
-                if (Settings.canDrawOverlays(this@MainActivity)) {
-                    startForegroundService(Intent(this@MainActivity, FloatingService::class.java))
-                    setStatus("Bubble aktif", "#4CAF50")
-                    moveTaskToBack(true)
-                } else {
-                    setStatus("Izin overlay belum aktif", "#F44336")
-                }
-            }
-        })
-        bubbleLayout.addView(Button(this).apply {
-            text = "Hentikan bubble"
-            textSize = 13f
-            setOnClickListener {
-                stopService(Intent(this@MainActivity, FloatingService::class.java))
-                setStatus("Bubble dihentikan", "#666666")
-            }
-        })
     }
 
-    private fun setStatus(msg: String, color: String) {
-        statusText.text = msg
-        statusText.setTextColor(Color.parseColor(color))
+    private fun setupDrawerMenu(dp: (Int) -> Int) {
+        val drawerView = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.parseColor("#151515"))
+            layoutParams = DrawerLayout.LayoutParams(
+                dp(280), DrawerLayout.LayoutParams.MATCH_PARENT
+            ).apply { gravity = Gravity.START }
+            setPadding(dp(16), dp(32), dp(16), dp(16))
+        }
+
+        drawerView.addView(TextView(this).apply {
+            text = "Pengaturan"
+            textSize = 18f
+            setTypeface(null, Typeface.BOLD)
+            setTextColor(Color.WHITE)
+            setPadding(0, 0, 0, dp(24))
+        })
+
+        // SWITCH OVERLAY (Fitur Utama Kita)
+        val switchRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, dp(12), 0, dp(12))
+        }
+        switchRow.addView(TextView(this).apply {
+            text = "Floating Bubble (Overlay)"
+            textSize = 14f
+            setTextColor(Color.WHITE)
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        })
+
+        overlaySwitch = Switch(this).apply {
+            setOnCheckedChangeListener { _, isChecked ->
+                if (isChecked) {
+                    if (Settings.canDrawOverlays(this@MainActivity)) {
+                        startForegroundService(Intent(this@MainActivity, FloatingService::class.java))
+                    } else {
+                        // Minta izin overlay
+                        startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
+                        isChecked = false // Balikin switch kalau belum izin
+                    }
+                } else {
+                    stopService(Intent(this@MainActivity, FloatingService::class.java))
+                }
+            }
+        }
+        switchRow.addView(overlaySwitch)
+        drawerView.addView(switchRow)
+
+        // Menu Lain (Dummy)
+        val menus = listOf("Bahasa", "Cara Mengunduh", "Umpan Balik & Saran")
+        for (m in menus) {
+            drawerView.addView(TextView(this).apply {
+                text = m
+                textSize = 14f
+                setTextColor(Color.WHITE)
+                setPadding(0, dp(16), 0, dp(16))
+            })
+        }
+
+        drawerLayout.addView(drawerView)
     }
 
     private fun startDownload() {
         val link = linkInput.text.toString().trim()
-        if (link.isBlank()) { setStatus("Link masih kosong bro", "#F44336"); return }
-        if (!link.contains("tiktok.com", ignoreCase = true)) { setStatus("Itu bukan link TikTok", "#F44336"); return }
+        if (link.isBlank() || !link.contains("tiktok.com", true)) {
+            statusText.text = "Link tidak valid"
+            statusText.setTextColor(Color.RED)
+            return
+        }
 
         downloadBtn.isEnabled = false
-        setStatus("⏳ Mengunduh...", "#FF9800")
+        statusText.text = "⏳ Mengunduh..."
+        statusText.setTextColor(Color.parseColor("#FF9800"))
 
         Thread {
             try {
                 val name = Downloader.download(this, link)
                 runOnUiThread {
-                    setStatus("✅ Tersimpan: $name", "#4CAF50")
+                    statusText.text = "✅ Tersimpan: $name"
+                    statusText.setTextColor(Color.parseColor("#4CAF50"))
                     linkInput.setText("")
                     downloadBtn.isEnabled = true
                     saveToHistory(name)
                 }
             } catch (e: Exception) {
                 runOnUiThread {
-                    setStatus("❌ Gagal: ${e.message}", "#F44336")
+                    statusText.text = "❌ Gagal: ${e.message}"
+                    statusText.setTextColor(Color.RED)
                     downloadBtn.isEnabled = true
                 }
             }
@@ -325,7 +338,7 @@ class MainActivity : Activity() {
         val prefs = getSharedPreferences("TikDLHistory", Context.MODE_PRIVATE)
         val jsonArray = JSONArray(prefs.getString("history_json", "[]"))
         val newArray = JSONArray()
-        newArray.put(fileName) 
+        newArray.put(fileName)
         for (i in 0 until jsonArray.length()) { newArray.put(jsonArray.getString(i)) }
         prefs.edit().putString("history_json", newArray.toString()).apply()
         loadHistory()
@@ -335,7 +348,7 @@ class MainActivity : Activity() {
         historyContainer.removeAllViews()
         val prefs = getSharedPreferences("TikDLHistory", Context.MODE_PRIVATE)
         val jsonArray = JSONArray(prefs.getString("history_json", "[]"))
-        
+
         if (jsonArray.length() == 0) {
             historyContainer.addView(TextView(this).apply {
                 text = "Belum ada riwayat download."
