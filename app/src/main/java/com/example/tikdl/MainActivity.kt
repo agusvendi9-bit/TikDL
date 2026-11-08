@@ -112,7 +112,7 @@ class MainActivity : Activity() {
             setPadding(dp(16), dp(8), dp(16), dp(16))
         }
 
-        setupBerandaUI(containerBeranda, dp)
+        setupBerandaUI(containerBeranda, ::dp)
         scrollBeranda.addView(containerBeranda)
         contentArea.addView(scrollBeranda)
 
@@ -169,7 +169,7 @@ class MainActivity : Activity() {
         drawerLayout.addView(mainLayout)
 
         // ===== 3. SIDEBAR MENU (DRAWER) =====
-        setupDrawerMenu(dp)
+        setupDrawerMenu(::dp)
 
         setContentView(drawerLayout)
         loadHistory()

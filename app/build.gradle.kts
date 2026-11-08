@@ -11,8 +11,8 @@ android {
         applicationId = "com.example.tikdl"
         minSdk = 29
         targetSdk = 34
-        versionCode = 39
-        versionName = "3.9"
+        versionCode = 53
+        versionName = "5.3"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -23,4 +23,5 @@ android {
 
 dependencies {
     implementation("com.google.android.material:material:1.11.0")
+    implementation("androidx.drawerlayout:drawerlayout:1.2.0")
 }
