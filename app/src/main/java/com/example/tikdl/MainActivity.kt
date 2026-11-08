@@ -326,7 +326,7 @@ class MainActivity : Activity() {
         row.addView(icon)
 
         row.addView(TextView(this).apply {
-            text = text
+            setText(text)
             textSize = 14f
             setTextColor(Color.WHITE)
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
