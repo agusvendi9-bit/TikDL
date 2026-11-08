@@ -140,13 +140,13 @@ class MainActivity : Activity() {
 
         mainLayout.addView(contentArea)
 
-        // --- BOTTOM NAVIGATION (Ubah Ikon Beranda) ---
+        // --- BOTTOM NAVIGATION (Ikon Rumah) ---
         val bottomNav = BottomNavigationView(this).apply {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
             )
             setBackgroundColor(Color.parseColor("#111111"))
-            menu.add(0, 1, 0, "Beranda").setIcon(R.drawable.ic_home) // Ikon Rumah
+            menu.add(0, 1, 0, "Beranda").setIcon(R.drawable.ic_home)
             menu.add(0, 2, 1, "Riwayat").setIcon(android.R.drawable.ic_menu_recent_history)
             itemIconTintList = ColorStateList.valueOf(Color.WHITE)
             itemTextColor = ColorStateList.valueOf(Color.WHITE)
@@ -169,7 +169,6 @@ class MainActivity : Activity() {
     }
 
     private fun setupBerandaUI(root: LinearLayout, dp: (Int) -> Int) {
-        // KOTAK INPUT (Gelap, melengkung, ada simbol ❐)
         val inputRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             background = GradientDrawable().apply {
@@ -193,7 +192,6 @@ class MainActivity : Activity() {
         }
         inputRow.addView(linkInput)
 
-        // Simbol Paste
         inputRow.addView(TextView(this).apply {
             text = "❐"
             textSize = 26f
@@ -209,7 +207,6 @@ class MainActivity : Activity() {
         })
         root.addView(inputRow)
 
-        // TOMBOL UNDUH (Terpisah, Full Width, Melengkung, No Shadow)
         downloadBtn = Button(this).apply {
             text = "Unduh Video"
             textSize = 15f
@@ -229,7 +226,6 @@ class MainActivity : Activity() {
         }
         root.addView(downloadBtn)
 
-        // STATUS
         statusText = TextView(this).apply {
             text = "Siap menerima link"
             textSize = 12f
@@ -257,11 +253,7 @@ class MainActivity : Activity() {
             setPadding(0, 0, 0, dp(16))
         })
 
-        // --- SWITCH OVERLAY (Menu Pertama) ---
-        val switchRow = createMenuItem(drawerView, R.drawable.ic_home, "Floating Bubble", dp) {
-            overlaySwitch.isChecked = !overlaySwitch.isChecked
-        }
-        // Numpangin Switch di ujung kanan
+        // --- SWITCH OVERLAY (Dibuat dulu biar aman) ---
         overlaySwitch = Switch(this).apply {
             setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) {
@@ -269,19 +261,22 @@ class MainActivity : Activity() {
                         startForegroundService(Intent(this@MainActivity, FloatingService::class.java))
                     } else {
                         startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
-                        overlaySwitch.overlaySwitch.isChecked = false
+                        this.isChecked = false // Ini benerin error Val cannot be reassigned
                     }
                 } else {
                     stopService(Intent(this@MainActivity, FloatingService::class.java))
                 }
             }
         }
+
+        val switchRow = createMenuItem(drawerView, R.drawable.ic_home, "Floating Bubble", dp) {
+            // Pas row diklik, switch-nya ikut berubah
+            overlaySwitch.isChecked = !overlaySwitch.isChecked
+        }
         switchRow.addView(overlaySwitch)
         
-        // Garis Pemisah (Divider)
         addDivider(drawerView)
 
-        // --- MENU LAINNYA ---
         createMenuItem(drawerView, R.drawable.ic_language, "Bahasa", dp) {}
         addDivider(drawerView)
         
@@ -293,16 +288,13 @@ class MainActivity : Activity() {
         drawerLayout.addView(drawerView)
     }
 
-    // Fungsi Bantuan untuk Bikin Menu dengan Ikon & Ripple
     private fun createMenuItem(parent: LinearLayout, iconRes: Int, text: String, dp: (Int) -> Int, onClick: () -> Unit): LinearLayout {
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(12), dp(16), dp(12), dp(16))
-            // Efek Ripple (Garis Transparan kalau dipencet)
             background = RippleDrawable(
-                ColorStateList.valueOf(Color.parseColor("#33FFFFFF")),
-                null, null
+                ColorStateList.valueOf(Color.parseColor("#33FFFFFF")), null, null
             )
             setOnClickListener { onClick() }
         }
@@ -324,11 +316,10 @@ class MainActivity : Activity() {
         return row
     }
 
-    // Fungsi Garis Pemisah Transparan
     private fun addDivider(parent: LinearLayout) {
         parent.addView(View(this).apply {
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1).apply { topMargin = 8; bottomMargin = 8 }
-            setBackgroundColor(Color.parseColor("#33FFFFFF")) // Putih transparan 20%
+            setBackgroundColor(Color.parseColor("#33FFFFFF"))
         })
     }
 
