@@ -16,6 +16,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.text.InputType
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -222,6 +223,21 @@ class MainActivity : Activity() {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(50)
             ).apply { topMargin = dp(12) }
+            
+            // --- ANIMASI TEKAN TOMBOL (SCALE BOUNCE) ---
+            setOnTouchListener { v, event ->
+                when (event.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        v.animate().scaleX(0.95f).scaleY(0.95f).setDuration(100).start()
+                    }
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                        v.animate().scaleX(1f).scaleY(1f).setDuration(100).start()
+                    }
+                }
+                false // return false biar onClickListener tetep jalan
+            }
+            // -------------------------------------------
+            
             setOnClickListener { startDownload() }
         }
         root.addView(downloadBtn)
@@ -253,7 +269,7 @@ class MainActivity : Activity() {
             setPadding(0, 0, 0, dp(16))
         })
 
-        // --- SWITCH OVERLAY (Eksplisit) ---
+        // --- SWITCH OVERLAY ---
         overlaySwitch = Switch(this)
         overlaySwitch.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
@@ -291,9 +307,15 @@ class MainActivity : Activity() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(12), dp(16), dp(12), dp(16))
-            background = RippleDrawable(
-                ColorStateList.valueOf(Color.parseColor("#33FFFFFF")), null, null
-            )
+            
+            // Mask Persegi buat Ripple (Biar nggak jadi bola)
+            val mask = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                setColor(Color.WHITE)
+            }
+            val rippleColor = ColorStateList.valueOf(Color.parseColor("#33FFFFFF"))
+            background = RippleDrawable(rippleColor, null, mask)
+            
             setOnClickListener { onClick() }
         }
 
@@ -304,7 +326,7 @@ class MainActivity : Activity() {
         row.addView(icon)
 
         row.addView(TextView(this).apply {
-            setText(text)
+            text = text
             textSize = 14f
             setTextColor(Color.WHITE)
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
