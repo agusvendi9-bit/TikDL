@@ -5,9 +5,12 @@ import android.content.Context
 import android.os.Environment
 import android.provider.MediaStore
 import org.json.JSONObject
+import java.io.IOException
 import java.net.HttpURLConnection
+import java.net.SocketTimeoutException
 import java.net.URL
 import java.net.URLEncoder
+import java.net.UnknownHostException
 
 object Downloader {
 
@@ -17,56 +20,74 @@ object Downloader {
 
     /** Mengunduh video tanpa watermark ke galeri (Movies/TikDL). Mengembalikan nama file. */
     fun download(ctx: Context, tiktokUrl: String): String {
-        // 1. Minta link video ke API
-        val c = URL(API).openConnection() as HttpURLConnection
-        c.requestMethod = "POST"
-        c.doOutput = true
-        c.connectTimeout = 15000
-        c.readTimeout = 30000
-        c.setRequestProperty("User-Agent", UA)
-        c.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
-        c.outputStream.use {
-            it.write(("url=" + URLEncoder.encode(tiktokUrl, "UTF-8") + "&hd=1").toByteArray())
-        }
-        val body = c.inputStream.bufferedReader().use { it.readText() }
-        val json = JSONObject(body)
-        if (json.optInt("code", -1) != 0) {
-            throw Exception(json.optString("msg", "API gagal"))
-        }
-        val data = json.getJSONObject("data")
-        var play = data.optString("hdplay")
-        if (play.isBlank()) play = data.optString("play")
-        if (play.isBlank()) throw Exception("Tidak ada video (mungkin postingan foto)")
-        if (play.startsWith("/")) play = "https://www.tikwm.com$play"
-
-        // 2. Siapkan file di galeri
-        val name = "tiktok_${data.optString("id", System.currentTimeMillis().toString())}.mp4"
-        val values = ContentValues().apply {
-            put(MediaStore.Video.Media.DISPLAY_NAME, name)
-            put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
-            put(MediaStore.Video.Media.RELATIVE_PATH, Environment.DIRECTORY_MOVIES + "/TikDL")
-            put(MediaStore.Video.Media.IS_PENDING, 1)
-        }
-        val resolver = ctx.contentResolver
-        val uri = resolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values)
-            ?: throw Exception("Gagal membuat file")
-
-        // 3. Unduh videonya
         try {
-            val v = URL(play).openConnection() as HttpURLConnection
-            v.setRequestProperty("User-Agent", UA)
-            v.connectTimeout = 15000
-            v.readTimeout = 60000
-            v.inputStream.use { input ->
-                resolver.openOutputStream(uri)!!.use { out -> input.copyTo(out) }
+            // 1. Minta link video ke API
+            val c = URL(API).openConnection() as HttpURLConnection
+            c.requestMethod = "POST"
+            c.doOutput = true
+            c.connectTimeout = 15000
+            c.readTimeout = 30000
+            c.setRequestProperty("User-Agent", UA)
+            c.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
+            c.outputStream.use {
+                it.write(("url=" + URLEncoder.encode(tiktokUrl, "UTF-8") + "&hd=1").toByteArray())
             }
-            values.clear()
-            values.put(MediaStore.Video.Media.IS_PENDING, 0)
-            resolver.update(uri, values, null, null)
+            
+            val body = c.inputStream.bufferedReader().use { it.readText() }
+            val json = JSONObject(body)
+            
+            if (json.optInt("code", -1) != 0) {
+                throw Exception(json.optString("msg", "Video tidak ditemukan atau bersifat privat."))
+            }
+            
+            val data = json.getJSONObject("data")
+            var play = data.optString("hdplay")
+            if (play.isBlank()) play = data.optString("play")
+            if (play.isBlank()) throw Exception("Tidak ada video (mungkin postingan foto/slide)")
+            if (play.startsWith("/")) play = "https://www.tikwm.com$play"
+
+            // 2. Siapkan file di galeri
+            val name = "tiktok_${data.optString("id", System.currentTimeMillis().toString())}.mp4"
+            val values = ContentValues().apply {
+                put(MediaStore.Video.Media.DISPLAY_NAME, name)
+                put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
+                put(MediaStore.Video.Media.RELATIVE_PATH, Environment.DIRECTORY_MOVIES + "/TikDL")
+                put(MediaStore.Video.Media.IS_PENDING, 1)
+            }
+            val resolver = ctx.contentResolver
+            val uri = resolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values)
+                ?: throw Exception("Gagal membuat file di galeri")
+
+            // 3. Unduh videonya
+            try {
+                val v = URL(play).openConnection() as HttpURLConnection
+                v.setRequestProperty("User-Agent", UA)
+                v.connectTimeout = 15000
+                v.readTimeout = 60000
+                v.inputStream.use { input ->
+                    resolver.openOutputStream(uri)!!.use { out -> input.copyTo(out) }
+                }
+                values.clear()
+                values.put(MediaStore.Video.Media.IS_PENDING, 0)
+                resolver.update(uri, values, null, null)
+            } catch (e: Exception) {
+                resolver.delete(uri, null, null)
+                throw Exception("Gagal mengunduh file video. Koneksi terputus?")
+            }
+            
+            return name
+
+        } catch (e: UnknownHostException) {
+            throw Exception("Tidak ada koneksi internet.")
+        } catch (e: SocketTimeoutException) {
+            throw Exception("Koneksi lambat atau server sedang sibuk.")
+        } catch (e: IOException) {
+            throw Exception("Gagal terhubung ke server. Coba lagi nanti.")
         } catch (e: Exception) {
-            resolver.delete(uri, null, null)
-            throw e
+            // Buang tulisan https://... dari pesan error kalau ada
+            val msg = e.message ?: "Terjadi kesalahan tidak diketahui."
+            if (msg.contains("http")) throw Exception("Server menolak permintaan. Coba lagi nanti.")
+            throw Exception(msg)
         }
-        return name
     }
 }
